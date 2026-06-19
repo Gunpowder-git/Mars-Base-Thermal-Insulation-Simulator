@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>火星基地隔热墙优化 · 热设计工作室</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="header">
+  <div class="logo">🚀 火星基地隔热墙优化 · 热设计工作室</div>
+  <div class="header-info">
+    <span id="status-badge" class="badge badge-ready">就绪</span>
+    <span id="frame-display">步数: 0</span>
+  </div>
+</header>
+
+<!-- 主体布局 -->
+<main class="main-grid">
+
+  <!-- 左: 控制面板 -->
+  <aside class="panel control-panel">
+    <h3>⚙️ 墙体设计</h3>
+
+    <div class="form-group">
+      <label>材料层配置</label>
+      <div id="layer-selects">
+        <select class="layer-select" data-layer="0"></select>
+        <select class="layer-select" data-layer="1"></select>
+        <select class="layer-select" data-layer="2"></select>
+        <select class="layer-select" data-layer="3"></select>
+        <select class="layer-select" data-layer="4"></select>
+      </div>
+      <button id="btn-apply" class="btn btn-primary">应用设计</button>
+    </div>
+
+    <div class="form-group">
+      <label>预设方案</label>
+      <div class="btn-row">
+        <button class="btn btn-preset" data-preset="basic">基础</button>
+        <button class="btn btn-preset" data-preset="advanced">进阶</button>
+        <button class="btn btn-preset" data-preset="optimized">优化</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>环境参数</label>
+      <div class="slider-group">
+        <span>室温目标</span>
+        <input type="range" id="room-temp" min="10" max="30" value="20" step="0.5">
+        <span class="val" id="room-temp-val">20°C</span>
+      </div>
+      <div class="slider-group">
+        <span>火星最低</span>
+        <input type="range" id="mars-min" min="-120" max="0" value="-80" step="1">
+        <span class="val" id="mars-min-val">-80°C</span>
+      </div>
+      <div class="slider-group">
+        <span>火星最高</span>
+        <input type="range" id="mars-max" min="-30" max="50" value="20" step="1">
+        <span class="val" id="mars-max-val">20°C</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>缺陷模拟</label>
+      <div class="btn-row">
+        <select id="defect-type">
+          <option value="">无缺陷</option>
+          <option value="thermal_bridge">热桥 (铜导热)</option>
+          <option value="crack">裂缝 (空气渗透)</option>
+        </select>
+        <button id="btn-defect" class="btn btn-danger">添加</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="btn-row">
+      <button id="btn-start" class="btn btn-success btn-lg">▶ 启动</button>
+      <button id="btn-pause" class="btn btn-warning btn-lg" disabled>⏸ 暂停</button>
+      <button id="btn-reset" class="btn btn-secondary btn-lg">↺ 重置</button>
+    </div>
+
+    <hr>
+
+    <div class="btn-row">
+      <button id="btn-story" class="btn btn-accent">📖 故事模式</button>
+      <button id="btn-compare" class="btn btn-accent">📊 对比模式</button>
+    </div>
+
+    <div id="story-info" class="story-info hidden"></div>
+  </aside>
+
+  <!-- 中: 热力图 -->
+  <section class="panel viz-panel">
+    <h3>🌡️ 温度场分布</h3>
+    <div id="heatmap" class="plot-container"></div>
+    <div id="compare-heatmap" class="plot-container hidden"></div>
+  </section>
+
+  <!-- 右: 指标面板 -->
+  <aside class="panel metrics-panel">
+    <h3>📈 实时物理量</h3>
+    <div class="metric-cards" id="metric-cards">
+      <div class="metric-card">
+        <div class="metric-label">室温</div>
+        <div class="metric-value" id="m-room">--°C</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">热阻 R</div>
+        <div class="metric-value" id="m-rvalue">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">热流 q</div>
+        <div class="metric-value" id="m-flux">-- W/m²</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">温差 ΔT</div>
+        <div class="metric-value" id="m-dt">--°C</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">成本</div>
+        <div class="metric-value" id="m-cost">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">重量</div>
+        <div class="metric-value" id="m-weight">-- kg</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">波动</div>
+        <div class="metric-value" id="m-std">±--°C</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">墙体均温</div>
+        <div class="metric-value" id="m-wtemp">--°C</div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<!-- 底部: 剖面图 -->
+<section class="panel profile-panel">
+  <h3>📉 墙体中心线温度剖面</h3>
+  <div id="profile-plot" class="plot-container"></div>
+</section>
+
+<!-- 底部: 材料图例 -->
+<footer class="panel legend-panel" id="legend">
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
